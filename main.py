@@ -1,5 +1,5 @@
 from typing import Optional, List
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from enum import IntEnum
 from pydantic import BaseModel, Field
 
@@ -47,13 +47,14 @@ def get_todo(todo_id: int):
     for todo in all_todos:
         if todo.todo_id == todo_id:
             return todo
+    raise HTTPException(status_code=404, detail="Todo not found")
 
 @app.get("/todos", response_model=List[Todo])
 def get_todos(first_n: int = None):
     if first_n is not None:
         return all_todos[:first_n]
     return all_todos
-
+ 
 @app.post("/todos", response_model=Todo)
 def create_todo(todo: TodoCreate):
     new_todo_id = max(todo.todo_id for todo in all_todos) + 1
@@ -72,16 +73,19 @@ def create_todo(todo: TodoCreate):
 def update_todo(todo_id: int, updated_todo: TodoUpdate):
     for todo in all_todos:
         if todo.todo_id == todo_id:
-            todo.todo_name = updated_todo.todo_name
-            todo.todo_description = updated_todo.todo_description
-            todo.priority = updated_todo.priority
+            if updated_todo.todo_name is not None:
+                todo.todo_name = updated_todo.todo_name
+            if updated_todo.todo_description is not None:
+                todo.todo_description = updated_todo.todo_description
+            if updated_todo.priority is not None:
+                todo.priority = updated_todo.priority
             return todo
-    return {"Message": "You cannot update todos that don't exist!"}
-    
+    raise HTTPException(status_code=404, detail="Todo not found")
+
 @app.delete("/todos/{todo_id}", response_model=Todo)
 def delete_todo(todo_id: int):
     for todo in all_todos:
         if todo.todo_id == todo_id:
             all_todos.remove(todo)
             return todo
-    return {"Message": "You cannot delete todos that don't exist!"}
+    raise HTTPException(status_code=404, detail="Todo not found")
