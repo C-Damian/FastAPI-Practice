@@ -89,3 +89,6 @@ def delete_todo(todo_id: int):
             all_todos.remove(todo)
             return todo
     raise HTTPException(status_code=404, detail="Todo not found")
+    
+
+
