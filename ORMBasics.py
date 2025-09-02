@@ -1,5 +1,5 @@
-from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, Boolean, ForeignKey
-import psycopg2
+from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, Boolean, ForeignKey, func
+
 
 #engine = create_engine("sqlite:///test.db", echo=True)
 #for local db
@@ -21,6 +21,12 @@ pets = Table("pets", meta,
         Column("owner_id", Integer, ForeignKey("people.id"))
 )
 
+belongings = Table("belongings", meta,
+        Column("id", Integer, primary_key=True),
+        Column("name", String, nullable=False),
+        Column("price", Integer, nullable=False),
+        Column("owner_id", Integer, ForeignKey("people.id"))
+)
 meta.create_all(engine)
 
 #update_statement = people.update().where(people.c.id == 2).values(name="Johnnyy Doe", age=75)
@@ -33,14 +39,18 @@ meta.create_all(engine)
 
 #conn.commit()
      
-#insert_statement = pets.insert().values([
-#    {"name": "Rex", "is_Dog": True, "owner_id": 3},
-#    {"name": "Whiskers", "is_Dog": False, "owner_id": 2},
-#    {"name": "Fido", "is_Dog": True, "owner_id": 6},
-#    {"name": "Rex", "is_Dog": True, "owner_id": 7},
-#    {"name": "Whiskers", "is_Dog": False, "owner_id": 8}
+#insert_statement = belongings.insert().values([
+#    {"name": "Watch", "price": 100, "owner_id": 3},
+#    {"name": "Laptop", "price": 150, "owner_id": 2},
+#    {"name": "Car", "price": 200, "owner_id": 6},
+#    {"name": "Bike", "price": 100, "owner_id": 7},
+#    {"name": "Cup", "price": 150, "owner_id": 8},
+#    {"name": "Jewlery", "price": 100, "owner_id": 3},
+#    {"name": "Chair", "price": 150, "owner_id": 2},
+#    {"name": "Picture", "price": 200, "owner_id": 6},
+#    {"name": "Books", "price": 100, "owner_id": 7},
+#    {"name": "Clothes", "price": 150, "owner_id": 8}
 #])
-
 
 #result = conn.execute(insert_statement)
 #conn.commit()
@@ -48,6 +58,13 @@ meta.create_all(engine)
 join_statement = people.join(pets, people.c.id == pets.c.owner_id)
 select_statement = people.select().with_only_columns(people.c.name, pets.c.name, pets.c.is_Dog).select_from(join_statement)
 result = conn.execute(select_statement)
+
+for row in result.fetchall():
+    print(row)
+
+aggregate_statement = belongings.select().with_only_columns(belongings.c.owner_id, func.sum(belongings.c.price)).group_by(belongings.c.owner_id).having(func.sum(belongings.c.price) > 200)
+
+result = conn.execute(aggregate_statement)
 
 for row in result.fetchall():
     print(row)
